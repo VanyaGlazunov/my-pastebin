@@ -41,11 +41,19 @@ type ErrorResponse struct {
 }
 
 func (a *API) RegisterRoutes(router *gin.Engine) {
+	router.GET("/health", a.healthCheck)
+
 	v1 := router.Group("/api/v1")
 	{
 		v1.POST("/paste", a.createPaste)
 		v1.GET("/paste/:id", a.getPaste)
 	}
+}
+
+func (a *API) healthCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"status": "healthy",
+	})
 }
 
 // @Summary      Create a new paste
