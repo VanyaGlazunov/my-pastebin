@@ -10,13 +10,27 @@ import (
 	"os"
 	"time"
 
+	_ "my-pastebin/docs"
+	"my-pastebin/internal/metrics"
+
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
+// Важно: импортируем сгенерированную документацию
+
+// @title           my-pastebin Service API
+// @version         1.0
+// @description     A minimalist service for sharing text snippets.
+// @host            localhost:8080
+// @BasePath        /api/v1
 func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
@@ -42,13 +56,17 @@ func main() {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
+	appMetrics := metrics.NewMetrics(prometheus.DefaultRegisterer)
 	dbStorage := storage.New(db)
-	apiHandler := api.New(dbStorage)
+	apiHandler := api.New(dbStorage, appMetrics)
 
 	go startCleanupWorker(dbStorage)
 
 	router := gin.Default()
+	router.Use(appMetrics.PrometheusMiddleware())
 	apiHandler.RegisterRoutes(router)
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	router.GET("/metrics", metrics.PrometheusHandler())
 
 	serverPort := ":" + os.Getenv("SERVER_PORT")
 	log.Printf("Starting server on port %s", serverPort)

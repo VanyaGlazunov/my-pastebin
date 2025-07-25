@@ -1,0 +1,105 @@
+basePath: /api/v1
+definitions:
+  api.CreatePasteRequest:
+    properties:
+      content:
+        type: string
+      expires_in:
+        description: '"10m", "1h", "1d", "never"'
+        type: string
+      syntax:
+        type: string
+    required:
+    - content
+    type: object
+  api.CreatePasteResponse:
+    properties:
+      id:
+        type: string
+      url:
+        type: string
+    type: object
+  api.ErrorResponse:
+    properties:
+      message:
+        example: error message
+        type: string
+    type: object
+  paste.Paste:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      expiresAt:
+        type: string
+      id:
+        type: string
+      syntax:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: A minimalist service for sharing text snippets.
+  title: my-pastebin Service API
+  version: "1.0"
+paths:
+  /paste:
+    post:
+      consumes:
+      - application/json
+      description: Saves a text snippet to the database with an expiration time
+      parameters:
+      - description: Paste Data
+        in: body
+        name: paste
+        required: true
+        schema:
+          $ref: '#/definitions/api.CreatePasteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/api.CreatePasteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Create a new paste
+      tags:
+      - pastes
+  /paste/{id}:
+    get:
+      description: Retrieves a text snippet from the database by its short ID
+      parameters:
+      - description: Paste ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/paste.Paste'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/api.ErrorResponse'
+      summary: Get a paste by ID
+      tags:
+      - pastes
+swagger: "2.0"

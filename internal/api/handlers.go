@@ -23,12 +23,21 @@ type CreatePasteResponse struct {
 	URL string `json:"url"`
 }
 
-type API struct {
-	storage *storage.Storage
+type Metrics interface {
+	IncPastesCreated()
 }
 
-func New(s *storage.Storage) *API {
-	return &API{storage: s}
+type API struct {
+	storage *storage.Storage
+	metrics Metrics
+}
+
+func New(s *storage.Storage, m Metrics) *API {
+	return &API{storage: s, metrics: m}
+}
+
+type ErrorResponse struct {
+	Message string `json:"message" example:"error message"`
 }
 
 func (a *API) RegisterRoutes(router *gin.Engine) {
@@ -39,12 +48,24 @@ func (a *API) RegisterRoutes(router *gin.Engine) {
 	}
 }
 
+// @Summary      Create a new paste
+// @Description  Saves a text snippet to the database with an expiration time
+// @Tags         pastes
+// @Accept       json
+// @Produce      json
+// @Param        paste   body      CreatePasteRequest  true  "Paste Data"
+// @Success      201     {object}  CreatePasteResponse
+// @Failure      400     {object}  ErrorResponse
+// @Failure      500     {object}  ErrorResponse
+// @Router       /paste [post]
 func (a *API) createPaste(c *gin.Context) {
 	var req CreatePasteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: err.Error()})
 		return
 	}
+
+	a.metrics.IncPastesCreated()
 
 	var expiresAt *time.Time
 	if d, err := parseDuration(req.ExpiresIn); err == nil {
@@ -61,7 +82,7 @@ func (a *API) createPaste(c *gin.Context) {
 	}
 
 	if err := a.storage.Save(c.Request.Context(), newPaste); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save paste"})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "failed to save paste"})
 		return
 	}
 
@@ -71,16 +92,25 @@ func (a *API) createPaste(c *gin.Context) {
 	})
 }
 
+// @Summary      Get a paste by ID
+// @Description  Retrieves a text snippet from the database by its short ID
+// @Tags         pastes
+// @Produce      json
+// @Param        id   path      string  true  "Paste ID"
+// @Success      200  {object}  paste.Paste
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /paste/{id} [get]
 func (a *API) getPaste(c *gin.Context) {
 	id := c.Param("id")
 
 	p, err := a.storage.GetByID(c.Request.Context(), id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": "paste not found"})
+			c.JSON(http.StatusNotFound, ErrorResponse{Message: "paste not found"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "database error"})
+		c.JSON(http.StatusInternalServerError, ErrorResponse{Message: "database error"})
 		return
 	}
 
@@ -104,7 +134,7 @@ const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456
 
 func generateShortID(n int) string {
 	b := make([]byte, n)
-	rand.Read(b) // Используем крипто-стойкий генератор
+	rand.Read(b)
 	for i := 0; i < n; i++ {
 		b[i] = letterBytes[int(b[i])%len(letterBytes)]
 	}

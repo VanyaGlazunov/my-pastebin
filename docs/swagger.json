@@ -1,0 +1,160 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "A minimalist service for sharing text snippets.",
+        "title": "my-pastebin Service API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/paste": {
+            "post": {
+                "description": "Saves a text snippet to the database with an expiration time",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pastes"
+                ],
+                "summary": "Create a new paste",
+                "parameters": [
+                    {
+                        "description": "Paste Data",
+                        "name": "paste",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/api.CreatePasteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/api.CreatePasteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/paste/{id}": {
+            "get": {
+                "description": "Retrieves a text snippet from the database by its short ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "pastes"
+                ],
+                "summary": "Get a paste by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Paste ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/paste.Paste"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/api.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "api.CreatePasteRequest": {
+            "type": "object",
+            "required": [
+                "content"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "expires_in": {
+                    "description": "\"10m\", \"1h\", \"1d\", \"never\"",
+                    "type": "string"
+                },
+                "syntax": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.CreatePasteResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "error message"
+                }
+            }
+        },
+        "paste.Paste": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "syntax": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
