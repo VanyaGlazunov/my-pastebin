@@ -9,41 +9,43 @@ import (
 	"gorm.io/gorm"
 )
 
-// Storage - наша структура для работы с БД
+type DBMeter interface {
+	IncDBQuery(operation string)
+}
+
 type Storage struct {
-	db *gorm.DB
+	db      *gorm.DB
+	metrics DBMeter
 }
 
-// New - конструктор для Storage
-func New(db *gorm.DB) *Storage {
-	return &Storage{db: db}
+func New(db *gorm.DB, metrics DBMeter) *Storage {
+	return &Storage{db: db, metrics: metrics}
 }
 
-// Save сохраняет новую пасту в БД
 func (s *Storage) Save(ctx context.Context, p *paste.Paste) error {
+	s.metrics.IncDBQuery("save")
 	result := s.db.WithContext(ctx).Create(p)
 	return result.Error
 }
 
-// GetByID получает пасту по ее уникальному ID
 func (s *Storage) GetByID(ctx context.Context, id string) (*paste.Paste, error) {
+	s.metrics.IncDBQuery(("get_by_id"))
 	var p paste.Paste
 	result := s.db.WithContext(ctx).First(&p, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, gorm.ErrRecordNotFound // Возвращаем специальную ошибку
+			return nil, gorm.ErrRecordNotFound
 		}
 		return nil, result.Error
 	}
 	return &p, nil
 }
 
-// DeleteExpired удаляет все пасты с истекшим сроком хранения
 func (s *Storage) DeleteExpired(ctx context.Context) (int64, error) {
+	s.metrics.IncDBQuery("delete_expired")
 	result := s.db.WithContext(ctx).
-		Where("expires_at IS NOT NULL AND expires_at < ?", time.Now()).
+		Where("expires_at < ?", time.Now()).
 		Delete(&paste.Paste{})
 
-	// result.RowsAffected содержит кол-во удаленных строк
 	return result.RowsAffected, result.Error
 }

@@ -14,6 +14,7 @@ type Metrics struct {
 	httpRequestsTotal   *prometheus.CounterVec
 	httpRequestDuration *prometheus.HistogramVec
 	pastesCreatedTotal  prometheus.Counter
+	dbQueriesTotal      *prometheus.CounterVec
 }
 
 func NewMetrics(reg prometheus.Registerer) *Metrics {
@@ -39,12 +40,23 @@ func NewMetrics(reg prometheus.Registerer) *Metrics {
 				Help: "Total number of created pastes.",
 			},
 		),
+		dbQueriesTotal: promauto.With(reg).NewCounterVec(
+			prometheus.CounterOpts{
+				Name: "pastebin_db_queries_total",
+				Help: "Total number of database queries executed.",
+			},
+			[]string{"operation"},
+		),
 	}
 	return m
 }
 
 func (m *Metrics) IncPastesCreated() {
 	m.pastesCreatedTotal.Inc()
+}
+
+func (m *Metrics) IncDBQuery(operation string) {
+	m.dbQueriesTotal.WithLabelValues(operation).Inc()
 }
 
 func (m *Metrics) PrometheusMiddleware() gin.HandlerFunc {

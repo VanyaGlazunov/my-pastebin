@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/paste": {
             "post": {
-                "description": "Saves a text snippet to the database with an expiration time",
+                "description": "Saves a text snippet to the database. Max size is 1MB. Expiration time is required",
                 "consumes": [
                     "application/json"
                 ],

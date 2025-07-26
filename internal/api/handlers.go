@@ -12,9 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const MaxPasteSize = 1024 * 1024 // 1MB
+
 type CreatePasteRequest struct {
 	Content   string `json:"content" binding:"required"`
-	ExpiresIn string `json:"expires_in"` // "10m", "1h", "1d", "never"
+	ExpiresIn string `json:"expires_in"`
 	Syntax    string `json:"syntax"`
 }
 
@@ -57,13 +59,14 @@ func (a *API) healthCheck(c *gin.Context) {
 }
 
 // @Summary      Create a new paste
-// @Description  Saves a text snippet to the database with an expiration time
+// @Description  Saves a text snippet to the database. Max size is 1MB. Expiration time is required
 // @Tags         pastes
 // @Accept       json
 // @Produce      json
 // @Param        paste   body      CreatePasteRequest  true  "Paste Data"
 // @Success      201     {object}  CreatePasteResponse
 // @Failure      400     {object}  ErrorResponse
+// @Failure      413     {object}  ErrorResponse
 // @Failure      500     {object}  ErrorResponse
 // @Router       /paste [post]
 func (a *API) createPaste(c *gin.Context) {
@@ -73,13 +76,19 @@ func (a *API) createPaste(c *gin.Context) {
 		return
 	}
 
+	if len(req.Content) > MaxPasteSize {
+		c.JSON(http.StatusRequestEntityTooLarge, ErrorResponse{Message: "paste content exceeds the maximum allowed size of 1MB"})
+		return
+	}
+
 	a.metrics.IncPastesCreated()
 
-	var expiresAt *time.Time
-	if d, err := parseDuration(req.ExpiresIn); err == nil {
-		t := time.Now().Add(d)
-		expiresAt = &t
+	duration, err := parseDuration(req.ExpiresIn)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid value for expires_in. valid options are: 10m, 1h, 1d"})
+		return
 	}
+	expiresAt := time.Now().Add(duration)
 
 	newPaste := &paste.Paste{
 		ID:        generateShortID(8),

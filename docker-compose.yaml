@@ -45,5 +45,18 @@ services:
       - app
       - postgres-exporter
 
+  grafana:
+    image: grafana/grafana-oss:10.2.2
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana_data:/var/lib/grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
+  grafana_data:

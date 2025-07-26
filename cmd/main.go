@@ -57,7 +57,7 @@ func main() {
 	}
 
 	appMetrics := metrics.NewMetrics(prometheus.DefaultRegisterer)
-	dbStorage := storage.New(db)
+	dbStorage := storage.New(db, appMetrics)
 	apiHandler := api.New(dbStorage, appMetrics)
 
 	go startCleanupWorker(dbStorage)
