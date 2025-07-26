@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 4,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -397,7 +396,7 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 0.5
               }
             ]
           }
@@ -410,7 +409,7 @@
         "x": 12,
         "y": 8
       },
-      "id": 3,
+      "id": 2,
       "options": {
         "legend": {
           "calcs": [],
@@ -431,7 +430,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "sum(rate(pastebin_http_requests_total{status_code=\"5..\"}[1m]))",
+          "expr": "histogram_quantile(0.99, sum by(le) (rate(pastebin_http_request_duration_seconds_bucket[30s])))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -441,7 +440,7 @@
           "useBackend": false
         }
       ],
-      "title": "5xx Error Rate",
+      "title": "Latency p99",
       "type": "timeseries"
     },
     {
@@ -496,7 +495,7 @@
               },
               {
                 "color": "red",
-                "value": 0.5
+                "value": 80
               }
             ]
           }
@@ -506,10 +505,10 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
+        "x": 5,
         "y": 16
       },
-      "id": 2,
+      "id": 3,
       "options": {
         "legend": {
           "calcs": [],
@@ -530,7 +529,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "histogram_quantile(0.99, sum by(le) (rate(pastebin_http_request_duration_seconds_bucket[1m])))",
+          "expr": "sum(rate(pastebin_http_requests_total{status_code=\"5..\"}[1m]))",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "instant": false,
@@ -540,7 +539,7 @@
           "useBackend": false
         }
       ],
-      "title": "Latency p99",
+      "title": "5xx Error Rate",
       "type": "timeseries"
     }
   ],
@@ -560,6 +559,6 @@
   "timezone": "",
   "title": "Service Health",
   "uid": "a5ed497f-2d35-4823-afad-37e5af6e3f46",
-  "version": 9,
+  "version": 10,
   "weekStart": ""
 }

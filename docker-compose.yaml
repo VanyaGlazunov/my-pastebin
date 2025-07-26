@@ -38,8 +38,10 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus:/etc/prometheus/
+      - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
     restart: unless-stopped
     depends_on:
       - app
@@ -67,7 +69,25 @@ services:
       - app 
     environment:
       LOCUST_HOST: http://app:8080
+    
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    user: "${UID}:${GID}"
+    ports:
+      - "9093:9093"
+    env_file: .env
+    volumes:
+      - ./alertmanager:/config
+      - alertmanager_data:/data
+    command:
+      - '--config.file=/config/config.yml'
+      - '--storage.path=/data'
+    restart: unless-stopped
+    depends_on:
+      - prometheus
 
 volumes:
+  prometheus_data:
   postgres_data:
   grafana_data:
+  alertmanager_data:

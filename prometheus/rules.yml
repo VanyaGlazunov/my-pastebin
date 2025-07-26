@@ -1,0 +1,20 @@
+groups:
+  - name: PastebinAlerts
+    rules:
+      - alert: HighP99Latency
+        expr: histogram_quantile(0.99, sum(rate(pastebin_http_request_duration_seconds_bucket{job="pastebin-service"}[30s])) by (le)) > 0.5
+        for: 15s
+        labels:
+          severity: critical
+        annotations:
+          summary: "High p99 latency on Pastebin service"
+          description: "The 99th percentile latency for job '{{ $labels.job }}' is over 500ms."
+
+      - alert: HighDatabaseRPS
+        expr: sum(rate(pastebin_db_queries_total[30s])) by (job) > 100
+        for: 30s
+        labels:
+          severity: warning
+        annotations:
+          summary: "High RPS on Database from application"
+          description: "The database is handling more than 100 QPS (Queries Per Second) from job '{{ $labels.job }}'."
