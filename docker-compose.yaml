@@ -56,6 +56,17 @@ services:
     restart: unless-stopped
     depends_on:
       - prometheus
+    
+  locust:
+    build:
+      context: ./locust 
+    ports:
+      - "8089:8089" 
+    restart: on-failure
+    depends_on:
+      - app 
+    environment:
+      LOCUST_HOST: http://app:8080
 
 volumes:
   postgres_data:
