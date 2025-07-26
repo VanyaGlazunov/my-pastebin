@@ -19,7 +19,7 @@ class PastebinUser(HttpUser):
         """
         Simulates new paste creation
         """
-        expires_in = random.choice(["10m", "1h", "1d"])
+        expires_in = random.choice(["10m", "20m", "30m", "1h"])
         syntax = random.choice(["text", "python", "go", "json"])
         payload = {
             "content": f"Random content from Locust: {random_string(256)}",

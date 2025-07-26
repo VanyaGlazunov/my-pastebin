@@ -83,9 +83,9 @@ func (a *API) createPaste(c *gin.Context) {
 
 	a.metrics.IncPastesCreated()
 
-	duration, err := parseDuration(req.ExpiresIn)
+	duration, err := time.ParseDuration(req.ExpiresIn)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid value for expires_in. valid options are: 10m, 1h, 1d"})
+		c.JSON(http.StatusBadRequest, ErrorResponse{Message: "invalid value for expires_in. valid options are: 10s, 10m, 1h"})
 		return
 	}
 	expiresAt := time.Now().Add(duration)
@@ -132,19 +132,6 @@ func (a *API) getPaste(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, p)
-}
-
-func parseDuration(s string) (time.Duration, error) {
-	switch s {
-	case "10m":
-		return 10 * time.Minute, nil
-	case "1h":
-		return time.Hour, nil
-	case "1d":
-		return 24 * time.Hour, nil
-	default:
-		return 0, errors.New("invalid duration")
-	}
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
