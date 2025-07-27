@@ -7,6 +7,7 @@ import (
 	"my-pastebin/internal/api"
 	"my-pastebin/internal/paste"
 	"my-pastebin/internal/storage"
+	"my-pastebin/internal/tracing"
 	"os"
 	"time"
 
@@ -19,6 +20,8 @@ import (
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
+	"go.opentelemetry.io/otel"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -32,6 +35,11 @@ import (
 // @host            localhost:8080
 // @BasePath        /api/v1
 func main() {
+	tracerProvider, shutdown := tracing.InitTracerProvider("jaeger:4317", "pastebin-service")
+	defer shutdown()
+
+	otel.SetTracerProvider(tracerProvider)
+
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
@@ -62,8 +70,16 @@ func main() {
 
 	go startCleanupWorker(dbStorage)
 
-	router := gin.Default()
+	router := gin.New()
+	router.RedirectTrailingSlash = false
+	router.RedirectFixedPath = false
+
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+
 	router.Use(appMetrics.PrometheusMiddleware())
+	router.Use(otelgin.Middleware("pastebin-service", otelgin.WithTracerProvider(tracerProvider)))
+
 	apiHandler.RegisterRoutes(router)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/metrics", metrics.PrometheusHandler())

@@ -6,6 +6,7 @@ import (
 	"my-pastebin/internal/paste"
 	"time"
 
+	"go.opentelemetry.io/otel"
 	"gorm.io/gorm"
 )
 
@@ -23,12 +24,18 @@ func New(db *gorm.DB, metrics DBMeter) *Storage {
 }
 
 func (s *Storage) Save(ctx context.Context, p *paste.Paste) error {
+	ctx, span := otel.Tracer("storage").Start(ctx, "db.Save")
+	defer span.End()
+
 	s.metrics.IncDBQuery("save")
 	result := s.db.WithContext(ctx).Create(p)
 	return result.Error
 }
 
 func (s *Storage) GetByID(ctx context.Context, id string) (*paste.Paste, error) {
+	ctx, span := otel.Tracer("storage").Start(ctx, "db.GetByID")
+	defer span.End()
+
 	s.metrics.IncDBQuery(("get_by_id"))
 	var p paste.Paste
 	result := s.db.WithContext(ctx).First(&p, "id = ?", id)
@@ -42,6 +49,9 @@ func (s *Storage) GetByID(ctx context.Context, id string) (*paste.Paste, error) 
 }
 
 func (s *Storage) DeleteExpired(ctx context.Context) (int64, error) {
+	ctx, span := otel.Tracer("storage").Start(ctx, "db.DeleteExpired")
+	defer span.End()
+
 	s.metrics.IncDBQuery("delete_expired")
 	result := s.db.WithContext(ctx).
 		Where("expires_at < ?", time.Now()).

@@ -9,6 +9,7 @@ services:
       - .env
     depends_on:
       - db
+      - jaeger
     restart: on-failure
 
   db:
@@ -31,6 +32,7 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+      - jaeger
   
   prometheus:
     image: prom/prometheus:v2.47.2
@@ -85,6 +87,13 @@ services:
     restart: unless-stopped
     depends_on:
       - prometheus
+    
+  jaeger:
+    image: jaegertracing/all-in-one:latest 
+    ports:
+      - "16686:16686" 
+      - "4317:4317"   
+    restart: unless-stopped
 
 volumes:
   prometheus_data:
