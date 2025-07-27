@@ -2,7 +2,9 @@ package api
 
 import (
 	"crypto/rand"
+	"embed"
 	"errors"
+	"log"
 	"my-pastebin/internal/paste"
 	"my-pastebin/internal/storage"
 	"net/http"
@@ -13,6 +15,9 @@ import (
 )
 
 const MaxPasteSize = 1024 * 1024 // 1MB
+
+//go:embed templates/*
+var embedFS embed.FS
 
 type CreatePasteRequest struct {
 	Content   string `json:"content" binding:"required"`
@@ -43,6 +48,7 @@ type ErrorResponse struct {
 }
 
 func (a *API) RegisterRoutes(router *gin.Engine) {
+	router.GET("/docs", a.showDocs)
 	router.GET("/health", a.healthCheck)
 
 	v1 := router.Group("/api/v1")
@@ -56,6 +62,16 @@ func (a *API) healthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status": "healthy",
 	})
+}
+
+func (a *API) showDocs(c *gin.Context) {
+	data, err := embedFS.ReadFile("templates/docs.html")
+	if err != nil {
+		log.Printf("Failed read docs from embed fs %v", err)
+		c.String(http.StatusInternalServerError, "Internal Server Error")
+		return
+	}
+	c.Data(http.StatusOK, "text/html; charset=utf-8", data)
 }
 
 // @Summary      Create a new paste
