@@ -29,7 +29,7 @@ The core functionality allows users to anonymously share text snippets (pastes) 
 
 ---
 
-## Accessing Services
+## Accessing Services (Deadline is over, so service is down)
 I have encountered eventual problems in firefox, always worked in yandex-browser though
 
 - **Docs & Links Hub**: http://51.250.3.188:8080/docs
@@ -42,7 +42,7 @@ I have encountered eventual problems in firefox, always worked in yandex-browser
 - **Telegram Channel For Alerts** https://t.me/MyPastebinAlerts
 
 ## 🚨 Triggering Alerts
-1. Start test in Locust for 
+1. Start test in Locust for around 200 users 
 2. Wait for a few minutes, Observe p99 and DBRPS graphs hits red zones.
 3. View alerts in telegram channel.
 
