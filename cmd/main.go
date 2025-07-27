@@ -16,6 +16,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	swaggerFiles "github.com/swaggo/files"
@@ -80,6 +81,7 @@ func main() {
 	router.Use(appMetrics.PrometheusMiddleware())
 	router.Use(otelgin.Middleware("pastebin-service", otelgin.WithTracerProvider(tracerProvider)))
 
+	pprof.Register(router)
 	apiHandler.RegisterRoutes(router)
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/metrics", metrics.PrometheusHandler())
