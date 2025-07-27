@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -135,6 +136,8 @@ func (a *API) createPaste(c *gin.Context) {
 // @Failure      500  {object}  ErrorResponse
 // @Router       /paste/{id} [get]
 func (a *API) getPaste(c *gin.Context) {
+	bcrypt.GenerateFromPassword([]byte("simulate cpu work"), 9)
+
 	id := c.Param("id")
 
 	p, err := a.storage.GetByID(c.Request.Context(), id)
